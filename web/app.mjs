@@ -1,37 +1,8 @@
-import { cleanLines } from './model.mjs';
-const input = document.querySelector('#input');
-const output = document.querySelector('#output');
-const status = document.querySelector('#status');
-const copy = document.querySelector('#copy');
-function update() {
-  const result = cleanLines(input.value);
-  output.value = result.text;
-  status.textContent = `${result.count} unique ${result.count === 1 ? 'line' : 'lines'}; ${result.removed} ${result.removed === 1 ? 'duplicate' : 'duplicates'} removed.`;
-  copy.disabled = result.count === 0;
-}
-input.addEventListener('input', update);
-document.querySelector('#sample').addEventListener('click', () => {
-  input.value = '  Halifax\nLangley\nHalifax\n\nVancouver  ';
-  update();
-});
-document.querySelector('#clear').addEventListener('click', () => {
-  input.value = '';
-  update();
-  input.focus();
-});
-if (navigator.clipboard && window.isSecureContext) {
-  copy.hidden = false;
-  copy.disabled = true;
-  copy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(output.value);
-      status.textContent = 'Result copied.';
-    } catch {
-      output.focus();
-      output.select();
-      status.textContent = 'Copy was unavailable. The result is selected so you can copy it manually.';
-    }
-  });
-}
-// Namespace future preference storage as coolcode:<tool-id>:<key>.
-// Do not persist pasted text or uploads by default.
+import {selectProjects,validateSaved,csv,safeURL} from './model.mjs';
+const $=s=>document.querySelector(s), el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+let data,limit=36,onlySaved=false,saved=[];const key='coolcode:selfhostfinder:shortlist';try{saved=validateSaved(JSON.parse(localStorage.getItem(key)||'[]'));}catch{}
+function store(){try{localStorage.setItem(key,JSON.stringify(saved));}catch{$('#status').textContent='Storage unavailable; this shortlist lasts only for this tab.';}}
+function link(label,url){const a=el('a',label);a.href=safeURL(url)||'#';a.rel='noopener noreferrer';return a;}
+function render(){if(!data)return;const f={query:$('#query').value.trim(),category:$('#category').value,platform:$('#platform').value,licence:$('#licence').value,sort:$('#sort').value,active:$('#active').checked,saved:onlySaved};const rows=selectProjects(data.projects,f,saved);$('#saved-count').textContent=saved.length;$('#show-saved').setAttribute('aria-pressed',onlySaved);$('#status').textContent=`${rows.length.toLocaleString()} matching applications · showing ${Math.min(limit,rows.length)}${onlySaved?' · shortlist view':''}`;$('#grid').replaceChildren(...rows.slice(0,limit).map(p=>{const card=el('article',undefined,'card');card.append(el('h3',p.name),el('p',p.description));const chips=el('div',undefined,'chips');for(const t of p.categories)chips.append(el('span',t,'chip'));card.append(chips,el('p',`Platforms: ${p.platforms.join(' · ')||'Not supplied'}`,'details'),el('p',`Licence: ${p.licences.join(' · ')||'Not supplied'}`,'details'),el('p',`${p.archived?'Archived · ':''}Activity: ${p.updated||'not supplied'} · Release: ${p.release||'not supplied'}${p.release_date?' ('+p.release_date+')':''}`,'details'));const links=el('div',undefined,'links');links.append(link('Website ↗',p.website));if(p.source)links.append(link('Source ↗',p.source));if(p.demo)links.append(link('Demo ↗',p.demo));if(p.recipe)links.append(link('Rack Recipes ↗','https://coolcode.ca/rack-recipes/'));card.append(links);const b=el('button',saved.includes(p.id)?'Saved ✓':'+ Shortlist');b.setAttribute('aria-label',(saved.includes(p.id)?'Remove ':'Save ')+p.name);b.setAttribute('aria-pressed',saved.includes(p.id));b.onclick=()=>{saved=saved.includes(p.id)?saved.filter(x=>x!==p.id):[...saved,p.id].slice(0,500);store();render();};card.append(b);return card;}));$('#more').hidden=rows.length<=limit;const selected=data.projects.filter(p=>saved.includes(p.id));$('#shortlist').hidden=!selected.length;$('#export').disabled=!selected.length;$('#compare').replaceChildren(...selected.map(p=>{const tr=el('tr');for(const v of [p.name,p.categories.join(', '),p.platforms.join(', '),p.licences.join(', '),p.release||'Not supplied',p.updated||'Not supplied'])tr.append(el('td',v));return tr;}));}
+$('#filters').addEventListener('submit',e=>e.preventDefault());$('#filters').addEventListener('input',()=>{limit=36;render();});$('#filters').addEventListener('reset',()=>{onlySaved=false;limit=36;setTimeout(render);});for(const b of document.querySelectorAll('[data-category]'))b.onclick=()=>{$('#category').value=b.dataset.category;onlySaved=false;limit=36;render();};$('#show-saved').onclick=()=>{onlySaved=!onlySaved;limit=36;render();};$('#more').onclick=()=>{limit+=36;render();};$('#clear').onclick=()=>{saved=[];store();render();};$('#export').onclick=()=>{const blob=new Blob([csv(data.projects.filter(p=>saved.includes(p.id)))],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob),a=el('a');a.href=u;a.download='selfhost-shortlist.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);};
+try{const r=await fetch('./data/catalogue.json');if(!r.ok)throw Error('Catalogue unavailable');data=await r.json();if(data.schema!=='coolcode.selfhostfinder.v1'||!data.projects?.length)throw Error('Invalid catalogue');$('#total').textContent=data.projects.length.toLocaleString();$('#edition').textContent=`Checked ${data.checked_at.slice(0,10)} UTC · source edition ${data.source_committed_at.slice(0,10)} · weekly checks`;$('#revision').href=data.source+'/commit/'+data.source_commit;for(const [id,k] of [['category','categories'],['platform','platforms'],['licence','licences']])for(const v of [...new Set(data.projects.flatMap(p=>p[k]))].sort())$('#'+id).append(new Option(v,v));render();}catch(e){$('#status').textContent=e.message+'. Please retry later; no catalogue results are invented.';}

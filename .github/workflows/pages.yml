@@ -1,13 +1,18 @@
-name: Browser tool · Check and publish
+name: Selfhost Finder · Check and refresh
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '53 10 * * 1'
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
+    concurrency:
+      group: catalogue-refresh-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -15,13 +20,25 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          persist-credentials: false
+          persist-credentials: true
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+      - name: Install collector parser
+        run: python3 -m pip install -r scripts/requirements.txt
+      - uses: actions/checkout@v7
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        with:
+          repository: awesome-selfhosted/awesome-selfhosted-data
+          ref: master
+          path: .source-catalogue
+          persist-credentials: false
+      - name: Refresh the public catalogue
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/collect.py --source-dir .source-catalogue
       - name: Test the application
         run: node --test tests/*.test.mjs
       - name: Test the builder
@@ -46,6 +63,17 @@ jobs:
           python3 -m playwright install --with-deps chromium
       - name: Check application in a browser
         run: python3 tests/browser_smoke.py
+      - name: Retain the successful catalogue edition
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/data/
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh public self-hosted catalogue'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
       - name: Save browser screenshots
         if: always()
         uses: actions/upload-artifact@v7

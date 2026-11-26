@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/awesome-selfhosted/awesome-selfhosted-data",
+  "branch": "master",
+  "exclude_archived": false,
+  "recipe_ids": {
+    "freshrss": "freshrss",
+    "linkding": "linkding",
+    "uptime-kuma": "uptime-kuma",
+    "gitea": "gitea",
+    "grafana": "grafana",
+    "changedetection-io": "changedetection",
+    "ntfy": "ntfy",
+    "navidrome": "navidrome",
+    "audiobookshelf": "audiobookshelf",
+    "actual": "actual-budget",
+    "mealie": "mealie",
+    "memos": "memos"
+  }
+}

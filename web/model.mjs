@@ -1,7 +1,4 @@
-// Keep transformations separate from the DOM so they can be tested directly.
-export function cleanLines(text) {
-  if (typeof text !== 'string') throw new TypeError('Expected text');
-  const lines = text.split(/\r\n|\r|\n/).map(line => line.trim()).filter(Boolean);
-  const unique = [...new Set(lines)];
-  return { text: unique.join('\n'), count: unique.length, removed: lines.length - unique.length };
-}
+export function safeURL(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch{return null;}}
+export function selectProjects(rows,f={},saved=[]){let out=rows.filter(p=>(!f.query||[p.name,p.description,...p.categories,...p.platforms].join(' ').toLowerCase().includes(f.query.toLowerCase()))&&(!f.category||p.categories.includes(f.category))&&(!f.platform||p.platforms.includes(f.platform))&&(!f.licence||p.licences.includes(f.licence))&&(!f.active||!p.archived)&&(!f.saved||saved.includes(p.id)));return out.sort(f.sort==='recent'?(a,b)=>(b.updated||'').localeCompare(a.updated||'')||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));}
+export function validateSaved(value){return Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string'&&/^[a-z0-9_-]{1,150}$/.test(x)))].slice(0,500):[];}
+export function csv(rows){const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';return [['Name','Website','Source','Licence','Platforms','Source activity date','Release','Release date'],...rows.map(p=>[p.name,p.website,p.source,p.licences.join('; '),p.platforms.join('; '),p.updated,p.release,p.release_date])].map(r=>r.map(cell).join(',')).join('\r\n');}
