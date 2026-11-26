@@ -16,7 +16,8 @@
   "access": "browser",
   "data_info": {
     "mode": "snapshot",
-    "detail": "The awesome-selfhosted community catalogue supplies software descriptions, licences, platforms and dated repository activity. Checked weekly."
+    "detail": "The awesome-selfhosted community catalogue supplies software descriptions, licences, platforms and dated repository activity. Checked weekly.",
+    "cadence": "Weekly"
   }
 }
 
