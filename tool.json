@@ -2,7 +2,7 @@
   "id": "selfhostfinder",
   "title": "Selfhost Finder",
   "description": "Find self-hosted applications by purpose, platform and licence, then keep a private shortlist.",
-  "category": "linux",
+  "category": "projects",
   "tags": [
     "self-hosting",
     "alternatives",
@@ -19,3 +19,4 @@
     "detail": "The awesome-selfhosted community catalogue supplies software descriptions, licences, platforms and dated repository activity. Checked weekly."
   }
 }
+
