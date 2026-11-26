@@ -39,3 +39,7 @@ Modify the source/config, run tests, commit, then use **Actions → Selfhost Fin
 ## Privacy
 
 Shortlist IDs are stored under `coolcode:selfhostfinder:shortlist` and survive refresh. Clear shortlist removes only that key's contents. CSV exports are generated locally with spreadsheet-formula protection. Shared CoolCode metrics record only tool opens, never searches or selected applications. External project links load only when opened.
+
+## Ready-to-use example
+
+[Self-Hosted RSS Readers](https://coolcode.ca/selfhostfinder/rss-readers.html) opens this scenario in the same tool. Browse the Feed Readers category from the published self-hosted software catalogue. Narrow the list by platform and licence, then compare the projects in your shortlist.
